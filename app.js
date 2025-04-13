@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const passport = require('./config/passport');
 const session = require('express-session');
+const { apiLimiter } = require('./middleware/rateLimiter');
 // Mengkonfigurasi variabel lingkungan
 require('dotenv').config();
 
@@ -12,6 +13,8 @@ const app = express();
 // Menggunakan middleware CORS dan JSON
 app.use(cors());
 app.use(express.json());
+
+app.use('/api', apiLimiter);
 
 app.use(session({
     secret: process.env.JWT_SECRET,

@@ -1,46 +1,47 @@
-const express = require('express');
-const router = express.Router();
-const db = require('../config/database');
+const express = require('express'); // Mengimport Express.js
+const router = express.Router(); // Membuat router baru
+const db = require('../config/database'); // Mengimport koneksi basis data
+const { transactionThrottler } = require('../middleware/throttler');
 
-// Get all transaksi
+// Menangani request GET untuk mendapatkan semua transaksi
 router.get('/', (req, res) => {
     db.query('SELECT * FROM Transaksi', (err, results) => {
-        if (err) return res.status(500).json({ error: 'Database query error', details: err });
-        res.json(results);
+        if (err) return res.status(500).json({ error: 'Database query error', details: err }); // Menangani error basis data
+        res.json(results); // Mengembalikan hasil query
     });
 });
 
-// Get transaksi by ID
+// Menangani request GET untuk mendapatkan transaksi berdasarkan ID
 router.get('/:id', (req, res) => {
-    const { id } = req.params;
+    const { id } = req.params; // Mengambil ID dari parameter
     db.query('SELECT * FROM Transaksi WHERE ID_Transaksi = ?', [id], (err, result) => {
-        if (err) return res.status(500).json({ error: 'Database query error', details: err });
+        if (err) return res.status(500).json({ error: 'Database query error', details: err }); // Menangani error basis data
         if (result.length === 0) {
-            return res.status(404).json({ error: "Transaksi tidak ditemukan" });
+            return res.status(404).json({ error: "Transaksi tidak ditemukan" }); // Mengembalikan error jika transaksi tidak ditemukan
         }
-        res.json(result[0]);
+        res.json(result[0]); // Mengembalikan detail transaksi
     });
 });
 
-// Create new transaksi
-router.post('/', (req, res) => {
+// Menangani request POST untuk membuat transaksi baru
+router.post('/', transactionThrottler, async (req, res) => {
     const { ID_Project, Jenis_Transaksi, Jumlah, Tanggal_Transaksi, Keterangan } = req.body;
     
     // Validasi field yang wajib
     if (!ID_Project || !Jenis_Transaksi || !Jumlah || !Tanggal_Transaksi) {
-        return res.status(400).json({ error: 'ID Project, Jenis Transaksi, Jumlah, dan Tanggal Transaksi wajib diisi' });
+        return res.status(400).json({ error: 'ID Project, Jenis Transaksi, Jumlah, dan Tanggal Transaksi wajib diisi' }); // Mengembalikan error jika data wajib tidak diisi
     }
 
     // Validasi Jenis_Transaksi harus 'Pemasukan' atau 'Pengeluaran'
     if (!['Pemasukan', 'Pengeluaran'].includes(Jenis_Transaksi)) {
-        return res.status(400).json({ error: 'Jenis Transaksi harus Pemasukan atau Pengeluaran' });
+        return res.status(400).json({ error: 'Jenis Transaksi harus Pemasukan atau Pengeluaran' }); // Mengembalikan error jika Jenis Transaksi tidak valid
     }
 
     // Cek apakah Project exists
     db.query('SELECT * FROM Project WHERE ID_Project = ?', [ID_Project], (err, result) => {
-        if (err) return res.status(500).json({ error: 'Database query error', details: err });
+        if (err) return res.status(500).json({ error: 'Database query error', details: err }); // Menangani error basis data
         if (result.length === 0) {
-            return res.status(404).json({ error: 'Project tidak ditemukan' });
+            return res.status(404).json({ error: 'Project tidak ditemukan' }); // Mengembalikan error jika project tidak ditemukan
         }
 
         // Insert transaksi
@@ -48,27 +49,27 @@ router.post('/', (req, res) => {
             'INSERT INTO Transaksi (ID_Project, Jenis_Transaksi, Jumlah, Tanggal_Transaksi, Keterangan) VALUES (?, ?, ?, ?, ?)',
             [ID_Project, Jenis_Transaksi, Jumlah, Tanggal_Transaksi, Keterangan],
             (err, result) => {
-                if (err) return res.status(500).json({ error: 'Database insertion error', details: err });
-                res.json({ message: 'Transaksi berhasil dibuat', transaksiId: result.insertId });
+                if (err) return res.status(500).json({ error: 'Database insertion error', details: err }); // Menangani error basis data
+                res.json({ message: 'Transaksi berhasil dibuat', transaksiId: result.insertId }); // Mengembalikan pesan sukses
             }
         );
     });
 });
 
-// Update transaksi
+// Menangani request PUT untuk mengupdate transaksi
 router.put('/:id', (req, res) => {
     const { id } = req.params;
     const { ID_Project, Jenis_Transaksi, Jumlah, Tanggal_Transaksi, Keterangan } = req.body;
 
     // Validasi Jenis_Transaksi jika ada
     if (Jenis_Transaksi && !['Pemasukan', 'Pengeluaran'].includes(Jenis_Transaksi)) {
-        return res.status(400).json({ error: 'Jenis Transaksi harus Pemasukan atau Pengeluaran' });
+        return res.status(400).json({ error: 'Jenis Transaksi harus Pemasukan atau Pengeluaran' }); // Mengembalikan error jika Jenis Transaksi tidak valid
     }
 
     db.query('SELECT * FROM Transaksi WHERE ID_Transaksi = ?', [id], (err, result) => {
-        if (err) return res.status(500).json({ error: 'Database query error', details: err });
+        if (err) return res.status(500).json({ error: 'Database query error', details: err }); // Menangani error basis data
         if (result.length === 0) {
-            return res.status(404).json({ error: 'Transaksi tidak ditemukan' });
+            return res.status(404).json({ error: 'Transaksi tidak ditemukan' }); // Mengembalikan error jika transaksi tidak ditemukan
         }
 
         const oldData = result[0];
@@ -76,14 +77,14 @@ router.put('/:id', (req, res) => {
         // Jika ada ID_Project baru, cek dulu projectnya ada atau tidak
         if (ID_Project && ID_Project !== oldData.ID_Project) {
             db.query('SELECT * FROM Project WHERE ID_Project = ?', [ID_Project], (err, result) => {
-                if (err) return res.status(500).json({ error: 'Database query error', details: err });
+                if (err) return res.status(500).json({ error: 'Database query error', details: err }); // Menangani error basis data
                 if (result.length === 0) {
-                    return res.status(404).json({ error: 'Project tidak ditemukan' });
+                    return res.status(404).json({ error: 'Project tidak ditemukan' }); // Mengembalikan error jika project tidak ditemukan
                 }
-                updateTransaksi();
+                updateTransaksi(); // Memanggil fungsi updateTransaksi
             });
         } else {
-            updateTransaksi();
+            updateTransaksi(); // Memanggil fungsi updateTransaksi
         }
 
         function updateTransaksi() {
@@ -99,24 +100,24 @@ router.put('/:id', (req, res) => {
                 'UPDATE Transaksi SET ? WHERE ID_Transaksi = ?',
                 [updatedData, id],
                 (err, result) => {
-                    if (err) return res.status(500).json({ error: 'Database update error', details: err });
-                    res.json({ message: 'Transaksi berhasil diupdate' });
+                    if (err) return res.status(500).json({ error: 'Database update error', details: err }); // Menangani error basis data
+                    res.json({ message: 'Transaksi berhasil diupdate' }); // Mengembalikan pesan sukses
                 }
             );
         }
     });
 });
 
-// Delete transaksi
+// Menangani request DELETE untuk menghapus transaksi
 router.delete('/:id', (req, res) => {
     const { id } = req.params;
     
     db.query('DELETE FROM Transaksi WHERE ID_Transaksi = ?', [id], (err, result) => {
-        if (err) return res.status(500).json({ error: 'Database deletion error', details: err });
+        if (err) return res.status(500).json({ error: 'Database deletion error', details: err }); // Menangani error basis data
         if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'Transaksi tidak ditemukan' });
+            return res.status(404).json({ error: 'Transaksi tidak ditemukan' }); // Mengembalikan error jika transaksi tidak ditemukan
         }
-        res.json({ message: 'Transaksi berhasil dihapus' });
+        res.json({ message: 'Transaksi berhasil dihapus' }); // Mengembalikan pesan sukses
     });
 });
 
