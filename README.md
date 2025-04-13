@@ -32,7 +32,7 @@ cd manakeu
 npm install
 ```
 
-###3. Instalasi Tambahan
+### 3. Instalasi Tambahan
 ```bash
 npm install jsonwebtoken bcryptjs passport passport-google-oauth20 express-session express-rate-limit cors dotenv
 ```
