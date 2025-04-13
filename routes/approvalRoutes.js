@@ -1,6 +1,7 @@
 const express = require('express'); // Mengimport Express.js
 const router = express.Router(); // Membuat router baru
 const db = require('../config/database'); // Mengimport koneksi basis data
+const { approvalThrottler } = require('../middleware/throttler');
 
 // Menangani request GET untuk mendapatkan semua approval
 router.get('/', (req, res) => {
@@ -23,7 +24,7 @@ router.get('/:id', (req, res) => {
 });
 
 // Menangani request POST untuk membuat approval baru
-router.post('/', (req, res) => {
+router.post('/approve', approvalThrottler, async (req, res) => {
     const { ID_Nota, ID_Admin, Status_Approval, Tanggal_Approval, Catatan } = req.body; // Mengambil data dari body
     
     if (!ID_Nota || !ID_Admin || !Status_Approval || !Tanggal_Approval) {
