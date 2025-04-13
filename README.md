@@ -1,6 +1,6 @@
 # Manakeu – Web Manajemen Keuangan Perusahaan
 
-**Manakeu** adalah aplikasi web sederhana untuk mengelola keuangan perusahaan secara efisien. Dibangun dengan **Express.js** dan sudah mendukung autentikasi menggunakan **JWT** dan **Google OAuth**.
+*Manakeu* adalah sebuah aplikasi web yang dibuat untuk membantu perusahaan dalam mengelola keuangan secara lebih mudah, rapi, dan efisien. Dengan menggunakan Manakeu, pengguna dapat mencatat semua pemasukan dan pengeluaran, memantau transaksi yang telah dilakukan, serta merencanakan anggaran keuangan perusahaan. Aplikasi ini juga mendukung pengelolaan keuangan berdasarkan proyek, sehingga setiap proyek dapat dipantau dari sisi keuangannya secara terpisah. Selain itu, Manakeu menyediakan ringkasan total kondisi keuangan perusahaan dan memungkinkan data keuangan diekspor ke dalam bentuk file Excel untuk keperluan laporan atau dokumentasi. Aplikasi ini juga sudah dilengkapi dengan sistem login yang aman, termasuk opsi masuk menggunakan akun Google, sehingga pengguna dapat mengakses sistem dengan mudah dan tetap terjaga keamanannya. Secara keseluruhan, Manakeu hadir sebagai solusi sederhana namun lengkap untuk perusahaan yang ingin mengatur keuangan secara lebih teratur dan profesional.
 
 ## ✨ Fitur Sementara
 
