@@ -25,6 +25,7 @@ Clone repo dan install dependensi:
 Instalasi utama:
 
 Instalasi Tambahan:
+npm install jsonwebtoken bcryptjs passport passport-google-oauth20 express-session express-rate-limit cors dotenv
 
 
 ### Catatan
