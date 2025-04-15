@@ -34,6 +34,9 @@ const approvalRoutes = require('./routes/approvalRoutes');
 const logAktivitasRoutes = require('./routes/logAktivitasRoutes');
 const authRoutes = require('./routes/authRoutes');
 
+// API COMPLEX
+const complexTransactionRoutes = require('./routes/complexTransactionRoutes');
+
 // Menggunakan rute-rute yang diimport
 app.use('/api/projects', projectRoutes);
 app.use('/api/transaksi', transaksiRoutes);
@@ -42,6 +45,8 @@ app.use('/api/nota', notaRoutes);
 app.use('/api/approval', approvalRoutes);
 app.use('/api/logs', logAktivitasRoutes);
 app.use('/api/auth', authRoutes);
+
+app.use('/api/complex', complexTransactionRoutes);
 
 // Rute test untuk memastikan server berjalan
 app.get('/', (req, res) => {
