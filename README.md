@@ -21,11 +21,21 @@
 
 ## 📦 Instalasi
 
-Clone repo dan install dependensi:
-Instalasi utama:
+### 1. Clone Repository
+```bash
+git clone https://github.com/Firstianmaker/manakeu.git
+cd manakeu
+```
 
-Instalasi Tambahan:
+### 2. Instalasi Utama
+```bash
+npm install
+```
 
+### 3. Instalasi Tambahan
+```bash
+npm install jsonwebtoken bcryptjs passport passport-google-oauth20 express-session express-rate-limit cors dotenv
+```
 
 ### Catatan
 1. Fitur masih dalam tahap pengembangan
