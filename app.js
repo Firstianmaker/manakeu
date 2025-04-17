@@ -33,6 +33,8 @@ const notaRoutes = require('./routes/notaRoutes');
 const approvalRoutes = require('./routes/approvalRoutes');
 const logAktivitasRoutes = require('./routes/logAktivitasRoutes');
 const authRoutes = require('./routes/authRoutes');
+const redisRoutes = require('./routes/redisRoutes');
+
 
 // API COMPLEX
 const complexTransactionRoutes = require('./routes/complexTransactionRoutes');
@@ -45,7 +47,7 @@ app.use('/api/nota', notaRoutes);
 app.use('/api/approval', approvalRoutes);
 app.use('/api/logs', logAktivitasRoutes);
 app.use('/api/auth', authRoutes);
-
+app.use('/api/redis', redisRoutes);
 app.use('/api/complex', complexTransactionRoutes);
 
 // Rute test untuk memastikan server berjalan
