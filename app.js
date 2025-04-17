@@ -34,6 +34,7 @@ const approvalRoutes = require('./routes/approvalRoutes');
 const logAktivitasRoutes = require('./routes/logAktivitasRoutes');
 const authRoutes = require('./routes/authRoutes');
 const redisRoutes = require('./routes/redisRoutes');
+const whatsappRoutes = require('./routes/whatsappRoutes');
 
 
 // API COMPLEX
@@ -49,6 +50,8 @@ app.use('/api/logs', logAktivitasRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/redis', redisRoutes);
 app.use('/api/complex', complexTransactionRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
+app.use(express.static('public'));
 
 // Rute test untuk memastikan server berjalan
 app.get('/', (req, res) => {
