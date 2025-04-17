@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const { invalidateMultipleCache } = require('../utils/cacheUtils');
 
 const getProjectTimeline = async (req, res) => {
 try {
@@ -83,6 +84,17 @@ const transferProject = async (req, res) => {
               ]
           );
       }
+
+      // Tambahan: Invalidate cache untuk kedua project
+      await invalidateMultipleCache([
+          `project:summary:${source_project_id}`,
+          `project:summary:${target_project_id}`,
+          `project:timeline:${source_project_id}`,
+          `project:timeline:${target_project_id}`,
+          `project:monthly:${source_project_id}:*`,
+          `project:monthly:${target_project_id}:*`,
+          `user:dashboard:${req.user.ID_User}`
+      ]);
 
       await db.promise().query('COMMIT');
 

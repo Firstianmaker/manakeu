@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const { invalidateMultipleCache } = require('../utils/cacheUtils');
 
 const getProjectMonthly = async (req, res) => {
   try {
@@ -122,6 +123,15 @@ const projectBudgetAdjustment = async (req, res) => {
                 updated: updateResult.affectedRows > 0
             });
         }
+
+        // Tambahan: Invalidate cache setelah adjustment
+        await invalidateMultipleCache([
+            `project:summary:${project_id}`,
+            `project:monthly:${project_id}:*`,
+            `project:timeline:${project_id}`,
+            `user:dashboard:${req.user.ID_User}`,
+            `project:budget:${project_id}`
+        ]);
 
         await db.promise().query('COMMIT');
 

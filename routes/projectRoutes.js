@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 
-// Get all projects
+// Menangani request GET untuk mendapatkan semua project
 router.get('/', (req, res) => {
     db.query('SELECT * FROM Project', (err, results) => {
         if (err) return res.status(500).json({ error: 'Database query error', details: err });
@@ -10,19 +10,19 @@ router.get('/', (req, res) => {
     });
 });
 
-// Get project by ID
+// Menangani request GET untuk mendapatkan project berdasarkan ID
 router.get('/:id', (req, res) => {
     const { id } = req.params;
     db.query('SELECT * FROM Project WHERE ID_Project = ?', [id], (err, result) => {
         if (err) return res.status(500).json({ error: 'Database query error', details: err });
         if (result.length === 0) {
-            return res.status(404).json({ error: "Project not found" });
+            return res.status(404).json({ error: "Project tidak ditemukan" });
         }
         res.json(result[0]);
     });
 });
 
-// Create new project
+// Menangani request POST untuk membuat project baru
 router.post('/', (req, res) => {
     const { Nama_Project, Deskripsi, Tanggal_Mulai, Tanggal_Selesai, Status } = req.body;
     
@@ -40,7 +40,7 @@ router.post('/', (req, res) => {
     );
 });
 
-// Update project
+// Menangani request PUT untuk mengupdate project
 router.put('/:id', (req, res) => {
     const { id } = req.params;
     const { Nama_Project, Deskripsi, Tanggal_Mulai, Tanggal_Selesai, Status } = req.body;
@@ -72,7 +72,7 @@ router.put('/:id', (req, res) => {
     });
 });
 
-// Delete project
+// Menangani request DELETE untuk menghapus project
 router.delete('/:id', (req, res) => {
     const { id } = req.params;
     

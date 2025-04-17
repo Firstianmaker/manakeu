@@ -1,6 +1,7 @@
 // controllers/redisController.js
 const redis = require('../config/redis');
 const db = require('../config/database');
+const Encryption = require('../utils/encryption');
 
 // 1. User Session & Authentication
 const getUserSession = async (req, res) => {
@@ -11,9 +12,10 @@ const getUserSession = async (req, res) => {
         // Cek cache
         const cachedSession = await redis.get(cacheKey);
         if (cachedSession) {
+            const decryptedSession = Encryption.decryptObject(cachedSession);
             return res.json({
                 status: 'success',
-                data: JSON.parse(cachedSession),
+                data: decryptedSession,
                 source: 'cache'
             });
         }
@@ -39,18 +41,19 @@ const getUserSession = async (req, res) => {
             email: user[0].Email,
             role: user[0].Role,
             status: user[0].Status,
-            last_login: user[0].last_login
+            last_login: user[0].last_login,
+            api_key: user[0].API_Key // Data sensitif
         };
 
         // Simpan ke cache dengan TTL 24 jam
-        await redis.setex(cacheKey, 86400, JSON.stringify(userData));
+        const encryptedData = Encryption.encryptObject(userData);
+        await redis.setex(cacheKey, 86400, encryptedData);
 
         return res.json({
             status: 'success',
             data: userData,
             source: 'database'
         });
-
     } catch (error) {
         console.error('Error:', error);
         return res.status(500).json({
