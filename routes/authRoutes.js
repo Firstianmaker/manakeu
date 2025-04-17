@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const connection = require('../config/database');
 const passport = require('passport');
 const { loginLimiter, registerLimiter } = require('../middleware/rateLimiter');
+const Encryption = require('../utils/encryption');
 
 // Konstanta untuk validasi
 const VALIDATION_RULES = {
@@ -58,9 +59,9 @@ const validatePassword = (password) => {
         return 'Password harus mengandung minimal 1 angka';
     }
     
-    if (!new RegExp(`[${VALIDATION_RULES.ALLOWED_SPECIAL_CHARS}]`).test(password)) {
-        return 'Password harus mengandung minimal 1 karakter spesial (!@#$%^&*()_+-=[]{}|;:,.<>?)';
-    }
+    // if (!new RegExp(`[${VALIDATION_RULES.ALLOWED_SPECIAL_CHARS}]`).test(password)) {
+    //     return 'Password harus mengandung minimal 1 karakter spesial (!@#$%^&*()_+-=[]{}|;:,.<>?)';
+    // }
     
     return null;
 };
@@ -110,6 +111,32 @@ const authMiddleware = (req, res, next) => {
     } catch (error) {
         res.status(401).json({ error: 'Token tidak valid' });
     }
+};
+
+// Saat generate API key
+const generateApiKey = async (userId) => {
+    const apiKey = crypto.randomBytes(32).toString('hex');
+    const encryptedKey = Encryption.encryptApiKey(apiKey);
+    
+    await db.promise().query(
+        'UPDATE user SET API_Key = ? WHERE ID_User = ?',
+        [encryptedKey, userId]
+    );
+    
+    return apiKey; // Return plain API key ke user
+};
+
+// Saat verifikasi API key
+const verifyApiKey = async (apiKey) => {
+    const [user] = await db.promise().query(
+        'SELECT ID_User, API_Key FROM user WHERE ID_User = ?',
+        [userId]
+    );
+    
+    if (!user.length) return false;
+    
+    const decryptedKey = Encryption.decryptApiKey(user[0].API_Key);
+    return apiKey === decryptedKey;
 };
 
 // Register endpoint
@@ -304,6 +331,137 @@ router.post('/login', loginLimiter, async (req, res) => {
     }
 });
 
+// Update profile endpoint
+router.put('/update-profile', authMiddleware, async (req, res) => {
+    try {
+        const { Nama, Password, currentPassword } = req.body;
+        const userId = req.user.ID_User;
+
+        // Validasi input
+        if (!Nama && !Password) {
+            return res.status(400).json({ 
+                error: 'Minimal satu field (Nama atau Password) harus diisi untuk update' 
+            });
+        }
+
+        // Cek user di database
+        const checkUser = 'SELECT * FROM user WHERE ID_User = ?';
+        connection.query(checkUser, [userId], async (error, results) => {
+            if (error) {
+                console.error('Database error:', error);
+                return res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+            }
+
+            if (results.length === 0) {
+                return res.status(404).json({ error: 'User tidak ditemukan' });
+            }
+
+            const user = results[0];
+
+            // Jika update password, validasi password lama
+            if (Password) {
+                if (!currentPassword) {
+                    return res.status(400).json({ 
+                        error: 'Password saat ini diperlukan untuk mengubah password' 
+                    });
+                }
+
+                const validPassword = await bcrypt.compare(currentPassword, user.Password);
+                if (!validPassword) {
+                    return res.status(401).json({ 
+                        error: 'Password saat ini tidak sesuai' 
+                    });
+                }
+
+                // Validasi password baru
+                const passwordError = validatePassword(Password);
+                if (passwordError) {
+                    return res.status(400).json({ error: passwordError });
+                }
+            }
+
+            // Jika update nama, validasi nama
+            if (Nama) {
+                const namaError = validateNama(Nama);
+                if (namaError) {
+                    return res.status(400).json({ error: namaError });
+                }
+
+                // Cek duplikasi nama
+                const checkNama = 'SELECT ID_User FROM user WHERE Nama = ? AND ID_User != ?';
+                const [namaResults] = await connection.promise().query(checkNama, [Nama, userId]);
+                if (namaResults.length > 0) {
+                    return res.status(400).json({ error: ERROR_MESSAGES.DUPLICATE_NAME });
+                }
+            }
+
+            // Mulai proses update
+            let updateFields = [];
+            let updateValues = [];
+            let updateLog = [];
+
+            if (Nama) {
+                updateFields.push('Nama = ?');
+                updateValues.push(Nama);
+                updateLog.push(`Nama diubah menjadi ${Nama}`);
+            }
+
+            if (Password) {
+                const salt = await bcrypt.genSalt(10);
+                const hashedPassword = await bcrypt.hash(Password, salt);
+                updateFields.push('Password = ?');
+                updateValues.push(hashedPassword);
+                updateLog.push('Password diubah');
+            }
+
+            // Tambahkan userId untuk WHERE clause
+            updateValues.push(userId);
+
+            const updateQuery = `
+                UPDATE user 
+                SET ${updateFields.join(', ')}
+                WHERE ID_User = ?
+            `;
+
+            connection.query(updateQuery, updateValues, (updateError) => {
+                if (updateError) {
+                    console.error('Update error:', updateError);
+                    return res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+                }
+
+                // Log aktivitas
+                const logQuery = `
+                    INSERT INTO log_aktivitas (ID_User, Aksi) 
+                    VALUES (?, ?)
+                `;
+                connection.query(logQuery, [
+                    userId, 
+                    `User mengupdate profile: ${updateLog.join(', ')}`
+                ]);
+
+                // Ambil data user terbaru
+                connection.query(
+                    'SELECT ID_User, Nama, Email, Role, Tanggal_Buat FROM user WHERE ID_User = ?',
+                    [userId],
+                    (selectError, selectResults) => {
+                        if (selectError) {
+                            return res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+                        }
+
+                        res.json({
+                            message: 'Profile berhasil diupdate',
+                            user: selectResults[0]
+                        });
+                    }
+                );
+            });
+        });
+    } catch (error) {
+        console.error('Server error:', error);
+        res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+    }
+});
+
 // Get profile endpoint
 router.get('/me', authMiddleware, (req, res) => {
     const query = 'SELECT ID_User, Nama, Email, Role, Tanggal_Buat FROM user WHERE ID_User = ?';
@@ -324,42 +482,57 @@ router.get('/me', authMiddleware, (req, res) => {
 });
 
 // Google OAuth routes
+// Google OAuth routes
 router.get('/google',
     passport.authenticate('google', {
         scope: ['profile', 'email'],
-        accessType: 'offline',
-        prompt: 'consent'
+        prompt: 'consent',   // Tambah ini agar selalu muncul pilih akun
+        accessType: 'offline'
     })
 );
 
+// Route callback tetap sama
 router.get('/google/callback',
     passport.authenticate('google', { 
         failureRedirect: '/login',
-        session: false,
         failureMessage: true
     }),
     (req, res) => {
-        const token = jwt.sign(
-            { 
-                ID_User: req.user.ID_User,
-                Email: req.user.Email,
-                Role: req.user.Role 
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' }
-        );
+        try {
+            const token = jwt.sign(
+                { 
+                    ID_User: req.user.ID_User,
+                    Email: req.user.Email,
+                    Role: req.user.Role 
+                },
+                process.env.JWT_SECRET,
+                { expiresIn: '24h' }
+            );
 
-        // Log aktivitas
-        const logQuery = `
-            INSERT INTO log_aktivitas (ID_User, Aksi) 
-            VALUES (?, ?)
-        `;
-        connection.query(logQuery, [
-            req.user.ID_User,
-            'User login via Google'
-        ]);
+            // Log aktivitas
+            connection.query(
+                `INSERT INTO log_aktivitas (ID_User, Aksi) 
+                 VALUES (?, ?)`,
+                [req.user.ID_User, 'Login via Google']
+            );
 
-        res.redirect(`http://localhost:3000/auth-success?token=${token}`);
+            res.json({
+                status: 'success',
+                message: 'Google login berhasil',
+                token,
+                user: {
+                    ID_User: req.user.ID_User,
+                    Email: req.user.Email,
+                    Role: req.user.Role
+                }
+            });
+        } catch (error) {
+            console.error('OAuth callback error:', error);
+            res.status(500).json({
+                status: 'error',
+                message: 'Gagal login dengan Google'
+            });
+        }
     }
 );
 

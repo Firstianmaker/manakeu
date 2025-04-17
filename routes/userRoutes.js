@@ -24,7 +24,7 @@ router.get('/:id', (req, res) => {
 });
 
 // Menangani request POST untuk membuat user baru
-router.put('/:id', updateThrottler, async (req, res) => {
+router.post('/:id', updateThrottler, async (req, res) => {
     const { Nama, Email, Role } = req.body;
     
     if (!Nama || !Email || !Role) {
