@@ -105,6 +105,10 @@ npm install
 ```bash
 npm i express mysql2 dotenv cors passport passport-google-oauth20 jsonwebtoken bcryptjs helmet express-rate-limit redis ioredis memory-cache compression winston morgan performance-now express-validator validator xss multer crypto-js whatsapp-web.js qrcode-terminal nodemailer moment uuid lodash axios express-session connect-redis midtrans-client twilio
 ```
+### 4. Run
+```bash
+node app.js
+```
 ## 📄 Konfigurasi
 Buat file .env di root direktori dan isi variabel berikut:
 
