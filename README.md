@@ -128,7 +128,8 @@ MIDTRANS_CLIENT_KEY=your_midtrans_client_key
 - Aplikasi masih dalam tahap pengembangan aktif
 - OAuth harus dikonfigurasi melalui Google Developer Console
 - Pastikan koneksi WhatsApp aktif jika ingin menggunakan integrasi WA
-- Fitur export Excel tidak tersedia secara internal namun notifikasi via WhatsApp admin tersedia
+- Midtrans Payment Gateway harus dikonfigurasikan melalui website midtrans
+- Twilio harus dikonfigurasikan melalui website midtrans
 
 ## 📫 Kontak & Dokumentasi
 - Dokumentasi API: Swagger tersedia di endpoint /api-docs/#/
