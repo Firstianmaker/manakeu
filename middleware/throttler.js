@@ -3,7 +3,7 @@ const rateLimit = require('express-rate-limit');
 // Throttling untuk transaksi
 const transactionThrottler = rateLimit({
     windowMs: 1000, // 1 detik
-    max: 1, // 1 request per detik
+    max: 1,
     message: {
         error: 'Mohon tunggu sebentar sebelum melakukan transaksi baru'
     },
@@ -14,7 +14,7 @@ const transactionThrottler = rateLimit({
 // Throttling untuk approval
 const approvalThrottler = rateLimit({
     windowMs: 2000, // 2 detik
-    max: 1, // 1 request per 2 detik
+    max: 1,
     message: {
         error: 'Mohon tunggu sebentar sebelum melakukan approval baru'
     },
@@ -25,7 +25,7 @@ const approvalThrottler = rateLimit({
 // Throttling untuk update data
 const updateThrottler = rateLimit({
     windowMs: 1000, // 1 detik
-    max: 2, // 2 request per detik
+    max: 2,
     message: {
         error: 'Terlalu banyak permintaan update, mohon tunggu sebentar'
     },
