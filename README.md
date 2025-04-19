@@ -79,9 +79,9 @@
 
 - **Backend**: Node.js + Express.js
 - **Authentication**: JWT, Google OAuth 2.0 (`passport.js`)
-- **Database**: MySQL & MongoDB
+- **Database**: MySQL
 - **Cache**: Redis (dengan ioredis & memory-cache)
-- **Security & Middleware**: Helmet, Rate Limit, Express Validator
+- **Security & Middleware**: Helmet, Rate Limit, Throttling, Express Validator
 - **Messaging**: WhatsApp Web.js & Twilio
 - **Payment**: Midtrans
 - **Logging**: Winston & Morgan
@@ -95,10 +95,9 @@
 ```bash
 git clone https://github.com/Firstianmaker/manakeu.git
 cd manakeu
-
-
-### 2. Instalasi Utama
+```
 ```bash
+### 2. Instalasi Utama
 npm install
 ```
 
@@ -112,7 +111,7 @@ Buat file .env di root direktori dan isi variabel berikut:
 ```bash
 PORT=3000
 
-JWT_SECRET=your_jwt_secret
+JWT_SECRET=your_jwt_secret_min_32
 
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
