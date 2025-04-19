@@ -96,8 +96,8 @@
 git clone https://github.com/Firstianmaker/manakeu.git
 cd manakeu
 ```
-```bash
 ### 2. Instalasi Utama
+```bash
 npm install
 ```
 
