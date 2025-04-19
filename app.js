@@ -1,9 +1,30 @@
 // Core dependencies
 const express = require('express');
 const cors = require('cors');
+require('dotenv').config();
 const passport = require('./config/passport');
 const session = require('express-session');
-require('dotenv').config();
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpecs = require('./config/swagger');
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Authentication
+ *     description: User authentication and authorization
+ *   - name: Users
+ *     description: User management operations
+ *   - name: Projects
+ *     description: Project management operations
+ *   - name: Transactions
+ *     description: Financial transaction operations
+ *   - name: Nota
+ *     description: Receipt and document management
+ *   - name: Health
+ *     description: System health and monitoring
+ *   - name: Notifications
+ *     description: Notification services including SMS and voice calls
+ */
 
 // Import middleware
 const { apiLimiter } = require('./middleware/rateLimiter');
@@ -24,6 +45,8 @@ const authRoutes = require('./routes/authRoutes');
 const redisRoutes = require('./routes/redisRoutes');
 const complexTransactionRoutes = require('./routes/complexTransactionRoutes');
 const whatsappRoutes = require('./routes/whatsappRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const twilioRoutes = require('./routes/twilioRoutes');
 
 // Membuat aplikasi Express
 const app = express();
@@ -32,6 +55,13 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+
+// Swagger Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "Manakeu API Documentation",
+    customfavIcon: "/assets/favicon.ico"
+}));
 
 // Session dan Authentication middleware
 app.use(session({
@@ -73,6 +103,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/redis', redisRoutes);
 app.use('/api/complex', complexTransactionRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/payment', paymentRoutes);
+app.use('/api/twilio', twilioRoutes);
 
 app.use(express.static('public'));
 
