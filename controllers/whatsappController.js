@@ -33,7 +33,7 @@ exports.sendWhatsAppMessage = async (req, res) => {
         console.error('Error in sendWhatsAppMessage controller:', error);
         res.status(500).json({
             success: false,
-            message: 'Error internal server',
+            message: 'Error',
             error: error.message
         });
     }
@@ -50,7 +50,7 @@ exports.getWhatsAppStatus = (req, res) => {
             info: isConnected ? client.info : null
         });
     } catch (error) {
-        console.error('Error in getWhatsAppStatus controller:', error);
+        console.error('Error:', error);
         res.status(500).json({
             success: false,
             message: 'Error internal server',
@@ -66,12 +66,12 @@ exports.sendCustomerServiceMessage = async (customerName, customerPhone, message
         const csNumber = process.env.CS_WHATSAPP_NUMBER || '6281234567890';
         
         // Format pesan untuk CS
-        const csMessage = `*PESAN DARI CUSTOMER*\n\nNama: ${customerName}\nTelepon: ${customerPhone}\n\nPesan:\n${message}`;
+        const csMessage = `*MASSAGE DARI CLIENT USER*\n\nNama: ${customerName}\nTelepon: ${customerPhone}\n\nPesan:\n${message}`;
         
         // Kirim pesan ke CS
         return await sendMessage(csNumber, csMessage);
     } catch (error) {
-        console.error('Error sending CS message:', error);
+        console.error('Error saat mengirimkan pesan:', error);
         return { success: false, error: error.message };
     }
 }; 
