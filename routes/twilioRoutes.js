@@ -6,6 +6,65 @@ const auth = require('../middleware/auth');
 
 /**
  * @swagger
+ * components:
+ *   schemas:
+ *     SMSRequest:
+ *       type: object
+ *       required:
+ *         - to
+ *         - body
+ *       properties:
+ *         to:
+ *           type: string
+ *           description: Phone number to send SMS to (E.164 format)
+ *           example: "+62812345678"
+ *         body:
+ *           type: string
+ *           description: Message content (max 1600 characters)
+ *           example: "Your message here"
+ *     CallRequest:
+ *       type: object
+ *       required:
+ *         - to
+ *         - twiml
+ *       properties:
+ *         to:
+ *           type: string
+ *           description: Phone number to call (E.164 format)
+ *           example: "+62812345678"
+ *         twiml:
+ *           type: string
+ *           description: TwiML instructions for the call
+ *           example: "<Response><Say>Hello, this is a test call from Manakeu.</Say></Response>"
+ *     MessageLog:
+ *       type: object
+ *       properties:
+ *         sid:
+ *           type: string
+ *           description: Unique message identifier
+ *         to:
+ *           type: string
+ *           description: Recipient phone number
+ *         from:
+ *           type: string
+ *           description: Sender phone number
+ *         body:
+ *           type: string
+ *           description: Message content
+ *         status:
+ *           type: string
+ *           description: Message status (sent, delivered, failed, etc)
+ *         direction:
+ *           type: string
+ *           description: Direction of message (inbound/outbound)
+ *         dateCreated:
+ *           type: string
+ *           format: date-time
+ *           description: Message creation timestamp
+ */
+
+/**
+ * @swagger
  * /api/twilio/send-sms:
  *   post:
  *     tags: [Notifications]
@@ -18,20 +77,21 @@ const auth = require('../middleware/auth');
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - to
- *               - body
- *             properties:
- *               to:
- *                 type: string
- *                 example: "+62812345678"
- *               body:
- *                 type: string
- *                 example: "Your message here"
+ *             $ref: '#/components/schemas/SMSRequest'
  *     responses:
  *       200:
  *         description: SMS sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 sid:
+ *                   type: string
+ *                   description: Message SID from Twilio
+ *                 status:
+ *                   type: string
+ *                   description: Message status
  *       400:
  *         description: Invalid input data
  *       401:
@@ -62,20 +122,21 @@ router.post('/send-sms',
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - to
- *               - twiml
- *             properties:
- *               to:
- *                 type: string
- *                 example: "+62812345678"
- *               twiml:
- *                 type: string
- *                 example: "<Response><Say>Hello, this is a test call from Manakeu.</Say></Response>"
+ *             $ref: '#/components/schemas/CallRequest'
  *     responses:
  *       200:
  *         description: Call initiated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 sid:
+ *                   type: string
+ *                   description: Call SID from Twilio
+ *                 status:
+ *                   type: string
+ *                   description: Call status
  *       400:
  *         description: Invalid input data
  *       401:
@@ -104,6 +165,12 @@ router.post('/make-call',
  *     responses:
  *       200:
  *         description: Message logs retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/MessageLog'
  *       401:
  *         description: Unauthorized
  *       500:
