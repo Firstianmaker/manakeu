@@ -2,6 +2,66 @@ const express = require('express');
 const router = express.Router();
 const { sendMessage } = require('../config/whatsapp');
 
+/**
+ * @swagger
+ * tags:
+ *   name: WhatsApp
+ *   description: WhatsApp messaging integration endpoints
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     WhatsAppMessage:
+ *       type: object
+ *       required:
+ *         - number
+ *         - message
+ *       properties:
+ *         number:
+ *           type: string
+ *           description: The recipient's WhatsApp number (with country code)
+ *         message:
+ *           type: string
+ *           description: The message to be sent
+ */
+
+/**
+ * @swagger
+ * /api/whatsapp/send:
+ *   post:
+ *     summary: Send a WhatsApp message
+ *     tags: [WhatsApp]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/WhatsAppMessage'
+ *     responses:
+ *       200:
+ *         description: Message sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Pesan WhatsApp berhasil dikirim
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid input - missing number or message
+ *       500:
+ *         description: Server error or WhatsApp sending failed
+ */
 // Rute untuk mengirim pesan WhatsApp
 router.post('/send', async (req, res) => {
     try {
@@ -41,6 +101,34 @@ router.post('/send', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/whatsapp/status:
+ *   get:
+ *     summary: Check WhatsApp connection status
+ *     tags: [WhatsApp]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Connection status retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 connected:
+ *                   type: boolean
+ *                   description: Whether WhatsApp is connected
+ *                 info:
+ *                   type: object
+ *                   description: Connection information (null if not connected)
+ *       500:
+ *         description: Server error while checking status
+ */
 // Rute untuk cek status koneksi WhatsApp
 router.get('/status', (req, res) => {
     try {
