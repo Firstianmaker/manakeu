@@ -2,43 +2,43 @@ const db = require('../config/database');
 const { invalidateMultipleCache } = require('../utils/cacheUtils');
 
 const getProjectTimeline = async (req, res) => {
-try {
-  const { projectId } = req.params;
-  
-  const query = `
-      SELECT 
-          'transaksi' as tipe_aktivitas,
-          t.ID_Transaksi as id_aktivitas,
-          t.Tanggal_Transaksi as tanggal,
-          t.Jenis_Transaksi as jenis,
-          t.Jumlah,
-          t.Keterangan as deskripsi,
-          COALESCE(n.Status_Verifikasi, 'Belum Ada Nota') as status_nota,
-          COALESCE(a.Status_Approval, 'Belum Diapprove') as status_approval
-      FROM transaksi t
-      LEFT JOIN nota n ON t.ID_Transaksi = n.ID_Transaksi
-      LEFT JOIN approval a ON n.ID_Nota = a.ID_Nota
-      WHERE t.ID_Project = ?
-      ORDER BY t.Tanggal_Transaksi DESC`;
+    try {
+        const { projectId } = req.params;
+        
+        const query = `
+            SELECT 
+                'transaksi' as tipe_aktivitas,
+                t.ID_Transaksi as id_aktivitas,
+                t.Tanggal_Transaksi as tanggal,
+                t.Jenis_Transaksi as jenis,
+                t.Jumlah,
+                t.Keterangan as deskripsi,
+                COALESCE(n.Status_Verifikasi, 'Belum Ada Nota') as status_nota,
+                COALESCE(a.Status_Approval, 'Belum Diapprove') as status_approval
+            FROM transaksi t
+            LEFT JOIN nota n ON t.ID_Transaksi = n.ID_Transaksi
+            LEFT JOIN approval a ON n.ID_Nota = a.ID_Nota
+            WHERE t.ID_Project = ?
+            ORDER BY t.Tanggal_Transaksi DESC`;
 
-  const [results] = await db.promise().query(query, [projectId]);
+        const [results] = await db.promise().query(query, [projectId]);
 
-  return res.status(200).json({
-      status: 'success',
-      data: {
-          project_id: projectId,
-          total_aktivitas: results.length,
-          timeline: results.map(row => ({
-              ...row,
-              Jumlah: Number(row.Jumlah)
-          }))
-      }
-  });
-} catch (error) {
-  console.error('Error:', error);
-  return res.status(500).json({ status: 'error', message: error.message });
-}
-};
+        return res.status(200).json({
+            status: 'success',
+            data: {
+                project_id: projectId,
+                total_aktivitas: results.length,
+                timeline: results.map(row => ({
+                    ...row,
+                    Jumlah: Number(row.Jumlah)
+                }))
+            }
+        });
+        } catch (error) {
+        console.error('Error:', error);
+        return res.status(500).json({ status: 'error', message: error.message });
+        }
+    };
 
 const transferProject = async (req, res) => {
   try {
