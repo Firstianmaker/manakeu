@@ -111,9 +111,14 @@ Buat file .env di root direktori dan isi variabel berikut:
 
 ```bash
 PORT=3000
+
 JWT_SECRET=your_jwt_secret
+
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
 ```
 
 ## ⚠️ Catatan
