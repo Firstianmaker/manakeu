@@ -1,6 +1,77 @@
 const db = require('../config/database');
 const { invalidateMultipleCache } = require('../utils/cacheUtils');
 
+const bulkNotaApproval = async (req, res) => {
+    try {
+        const { nota_ids, status, catatan } = req.body;
+
+        if (!nota_ids || !Array.isArray(nota_ids) || !status) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Invalid input. Nota IDs dan status diperlukan'
+            });
+        }
+
+        await db.promise().query('START TRANSACTION');
+
+        const results = [];
+        for (const notaId of nota_ids) {
+            // 1. Update status nota
+            await db.promise().query(
+                `UPDATE nota 
+                SET Status_Verifikasi = ?, Tanggal_Verifikasi = NOW() 
+                WHERE ID_Nota = ?`,
+                [status, notaId]
+            );
+
+            // 2. Buat approval record
+            const [approvalResult] = await db.promise().query(
+                `INSERT INTO approval (ID_Nota, ID_Admin, Status_Approval, Tanggal_Approval, Catatan) 
+                VALUES (?, ?, ?, NOW(), ?)`,
+                [notaId, req.user.ID_User, status, catatan || null]
+            );
+
+            // 3. Log aktivitas
+            await db.promise().query(
+                `INSERT INTO log_aktivitas (ID_User, Aksi, Tanggal_Aksi) 
+                VALUES (?, ?, NOW())`,
+                [req.user.ID_User, `${status} nota ID ${notaId}`]
+            );
+
+            results.push({
+                nota_id: notaId,
+                approval_id: approvalResult.insertId,
+                status
+            });
+        }
+
+        // Tambahan: Invalidate related caches
+        await invalidateMultipleCache([
+            `project:summary:*`,
+            `user:dashboard:${req.user.ID_User}`,
+            `admin:approval:stats:${req.user.ID_User}`,
+            `user:notifications:count:*`,
+            `project:timeline:*`
+        ]);
+
+        await db.promise().query('COMMIT');
+
+        return res.status(200).json({
+            status: 'success',
+            message: `Berhasil memproses ${results.length} nota`,
+            data: results
+        });
+
+    } catch (error) {
+        await db.promise().query('ROLLBACK');
+        console.error('Error in bulk nota approval:', error);
+        return res.status(500).json({
+            status: 'error',
+            message: error.message
+        });
+    }
+};
+
 const getApprovalStats = async (req, res) => {
     try {
         const query = `
@@ -42,77 +113,6 @@ const getApprovalStats = async (req, res) => {
     } catch (error) {
         console.error('Error:', error);
         return res.status(500).json({ status: 'error', message: error.message });
-    }
-};
-
-const bulkNotaApproval = async (req, res) => {
-    try {
-        const { nota_ids, status, catatan } = req.body;
-
-        if (!nota_ids || !Array.isArray(nota_ids) || !status) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'Invalid input. Nota IDs dan status diperlukan'
-            });
-        }
-
-        await db.promise().query('START TRANSACTION');
-
-        const results = [];
-        for (const notaId of nota_ids) {
-            // 1. Update status nota
-            await db.promise().query(
-                `UPDATE nota 
-                 SET Status_Verifikasi = ?, Tanggal_Verifikasi = NOW() 
-                 WHERE ID_Nota = ?`,
-                [status, notaId]
-            );
-
-            // 2. Buat approval record
-            const [approvalResult] = await db.promise().query(
-                `INSERT INTO approval (ID_Nota, ID_Admin, Status_Approval, Tanggal_Approval, Catatan) 
-                 VALUES (?, ?, ?, NOW(), ?)`,
-                [notaId, req.user.ID_User, status, catatan || null]
-            );
-
-            // 3. Log aktivitas
-            await db.promise().query(
-                `INSERT INTO log_aktivitas (ID_User, Aksi, Tanggal_Aksi) 
-                 VALUES (?, ?, NOW())`,
-                [req.user.ID_User, `${status} nota ID ${notaId}`]
-            );
-
-            results.push({
-                nota_id: notaId,
-                approval_id: approvalResult.insertId,
-                status
-            });
-        }
-
-        // Tambahan: Invalidate related caches
-        await invalidateMultipleCache([
-            `project:summary:*`,
-            `user:dashboard:${req.user.ID_User}`,
-            `admin:approval:stats:${req.user.ID_User}`,
-            `user:notifications:count:*`,
-            `project:timeline:*`
-        ]);
-
-        await db.promise().query('COMMIT');
-
-        return res.status(200).json({
-            status: 'success',
-            message: `Berhasil memproses ${results.length} nota`,
-            data: results
-        });
-
-    } catch (error) {
-        await db.promise().query('ROLLBACK');
-        console.error('Error in bulk nota approval:', error);
-        return res.status(500).json({
-            status: 'error',
-            message: error.message
-        });
     }
 };
 
