@@ -5,6 +5,43 @@ const redis = require('../config/redis');
 const { logger } = require('../utils/logger');
 const PerformanceMonitor = require('../utils/performance');
 
+/**
+ * @swagger
+ * /api/health:
+ *   get:
+ *     summary: Check the health status of the API and its dependencies
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: System is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: healthy
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 version:
+ *                   type: string
+ *                 environment:
+ *                   type: string
+ *                 services:
+ *                   type: object
+ *                   properties:
+ *                     database:
+ *                       type: string
+ *                       enum: [healthy, unhealthy]
+ *                     redis:
+ *                       type: string
+ *                       enum: [healthy, unhealthy]
+ *       500:
+ *         description: One or more services are unhealthy
+ */
+
 // Fungsi untuk cek koneksi database
 const checkDatabase = async () => {
     try {
