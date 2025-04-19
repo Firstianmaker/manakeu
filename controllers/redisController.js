@@ -23,8 +23,8 @@ const getUserSession = async (req, res) => {
         // Ambil dari database
         const [user] = await db.promise().query(
             `SELECT ID_User, Nama, Email, Role, Status, 
-             DATE_FORMAT(Update_user, '%Y-%m-%d %H:%i:%s') as last_login
-             FROM user WHERE ID_User = ?`,
+            DATE_FORMAT(Update_user, '%Y-%m-%d %H:%i:%s') as last_login
+            FROM user WHERE ID_User = ?`,
             [userId]
         );
 
@@ -63,7 +63,61 @@ const getUserSession = async (req, res) => {
     }
 };
 
-// 2. Project Summary
+// 2. Recent Activities
+const getUserActivities = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { limit = 10 } = req.query;
+        const cacheKey = `user:activities:${userId}`;
+
+        // Cek cache
+        const cachedActivities = await redis.get(cacheKey);
+        if (cachedActivities) {
+            return res.json({
+                status: 'success',
+                data: JSON.parse(cachedActivities),
+                source: 'cache'
+            });
+        }
+
+        // Query database
+        const [activities] = await db.promise().query(
+            `SELECT 
+                ID_Log,
+                DATE_FORMAT(Tanggal_Aksi, '%Y-%m-%d %H:%i:%s') as tanggal,
+                Aksi as detail
+            FROM log_aktivitas
+            WHERE ID_User = ?
+            ORDER BY Tanggal_Aksi DESC
+            LIMIT ?`,
+            [userId, parseInt(limit)]
+        );
+
+        const activitiesData = activities.map(act => ({
+            id: act.ID_Log,
+            tanggal: act.tanggal,
+            detail: act.detail
+        }));
+
+        // Simpan ke cache dengan TTL 15 menit
+        await redis.setex(cacheKey, 900, JSON.stringify(activitiesData));
+
+        return res.json({
+            status: 'success',
+            data: activitiesData,
+            source: 'database'
+        });
+
+    } catch (error) {
+        console.error('Error:', error);
+        return res.status(500).json({
+            status: 'error',
+            message: error.message
+        });
+    }
+};
+
+// 3. Project Summary
 const getProjectSummary = async (req, res) => {
     try {
         const { projectId } = req.params;
@@ -127,60 +181,6 @@ const getProjectSummary = async (req, res) => {
         return res.json({
             status: 'success',
             data: summaryData,
-            source: 'database'
-        });
-
-    } catch (error) {
-        console.error('Error:', error);
-        return res.status(500).json({
-            status: 'error',
-            message: error.message
-        });
-    }
-};
-
-// 3. Recent Activities
-const getUserActivities = async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const { limit = 10 } = req.query;
-        const cacheKey = `user:activities:${userId}`;
-
-        // Cek cache
-        const cachedActivities = await redis.get(cacheKey);
-        if (cachedActivities) {
-            return res.json({
-                status: 'success',
-                data: JSON.parse(cachedActivities),
-                source: 'cache'
-            });
-        }
-
-        // Query database
-        const [activities] = await db.promise().query(
-            `SELECT 
-                ID_Log,
-                DATE_FORMAT(Tanggal_Aksi, '%Y-%m-%d %H:%i:%s') as tanggal,
-                Aksi as detail
-            FROM log_aktivitas
-            WHERE ID_User = ?
-            ORDER BY Tanggal_Aksi DESC
-            LIMIT ?`,
-            [userId, parseInt(limit)]
-        );
-
-        const activitiesData = activities.map(act => ({
-            id: act.ID_Log,
-            tanggal: act.tanggal,
-            detail: act.detail
-        }));
-
-        // Simpan ke cache dengan TTL 15 menit
-        await redis.setex(cacheKey, 900, JSON.stringify(activitiesData));
-
-        return res.json({
-            status: 'success',
-            data: activitiesData,
             source: 'database'
         });
 
@@ -495,7 +495,7 @@ const getUserDashboard = async (req, res) => {
         const [projects] = await db.promise().query(
             `SELECT COUNT(*) as total_projects,
                     COUNT(CASE WHEN Status = 'Active' THEN 1 END) as active_projects
-             FROM project WHERE ID_User = ?`,
+            FROM project WHERE ID_User = ?`,
             [userId]
         );
 
@@ -509,22 +509,22 @@ const getUserDashboard = async (req, res) => {
                         WHEN Jenis_Transaksi = 'Pengeluaran' THEN Jumlah 
                         ELSE 0 
                     END), 0) as total_expense
-             FROM transaksi WHERE ID_User = ?`,
+            FROM transaksi WHERE ID_User = ?`,
             [userId]
         );
 
         const [notas] = await db.promise().query(
             `SELECT COUNT(*) as total_notas,
                     COUNT(CASE WHEN Status_Verifikasi = 'Pending' THEN 1 END) as pending_notas
-             FROM nota WHERE ID_User = ?`,
+            FROM nota WHERE ID_User = ?`,
             [userId]
         );
 
         const [recentActivities] = await db.promise().query(
             `SELECT ID_Log, Aksi, DATE_FORMAT(Tanggal_Aksi, '%Y-%m-%d %H:%i:%s') as tanggal
-             FROM log_aktivitas 
-             WHERE ID_User = ? 
-             ORDER BY Tanggal_Aksi DESC LIMIT 5`,
+            FROM log_aktivitas 
+            WHERE ID_User = ? 
+            ORDER BY Tanggal_Aksi DESC LIMIT 5`,
             [userId]
         );
 
@@ -655,15 +655,15 @@ const getSearchResults = async (req, res) => {
         // Query dari database
         const [projects] = await db.promise().query(
             `SELECT ID_Project, Nama_Project, Status, 'project' as type
-             FROM project 
-             WHERE Nama_Project LIKE ? OR Deskripsi LIKE ?`,
+            FROM project 
+            WHERE Nama_Project LIKE ? OR Deskripsi LIKE ?`,
             [`%${query}%`, `%${query}%`]
         );
 
         const [transactions] = await db.promise().query(
             `SELECT ID_Transaksi, Jenis_Transaksi, Jumlah, Keterangan, 'transaction' as type
-             FROM transaksi 
-             WHERE Keterangan LIKE ?`,
+            FROM transaksi 
+            WHERE Keterangan LIKE ?`,
             [`%${query}%`]
         );
 
