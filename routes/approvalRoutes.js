@@ -3,6 +3,60 @@ const router = express.Router(); // Membuat router baru
 const db = require('../config/database'); // Mengimport koneksi basis data
 const { approvalThrottler } = require('../middleware/throttler');
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Approval:
+ *       type: object
+ *       required:
+ *         - ID_Nota
+ *         - ID_Admin
+ *         - Status_Approval
+ *         - Tanggal_Approval
+ *       properties:
+ *         ID_Approval:
+ *           type: integer
+ *           description: The auto-generated id of the approval
+ *         ID_Nota:
+ *           type: integer
+ *           description: The ID of the associated nota
+ *         ID_Admin:
+ *           type: integer
+ *           description: The ID of the admin who approved/rejected
+ *         Status_Approval:
+ *           type: string
+ *           enum: [Approved, Rejected]
+ *           description: The approval status
+ *         Tanggal_Approval:
+ *           type: string
+ *           format: date
+ *           description: The date of approval/rejection
+ *         Catatan:
+ *           type: string
+ *           description: Additional notes for the approval
+ */
+
+/**
+ * @swagger
+ * /api/approval:
+ *   get:
+ *     summary: Returns all approvals
+ *     tags: [Approvals]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: The list of approvals
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Approval'
+ *       500:
+ *         description: Database query error
+ */
 // Menangani request GET untuk mendapatkan semua approval
 router.get('/', (req, res) => {
     db.query('SELECT * FROM Approval', (err, results) => {
@@ -11,6 +65,33 @@ router.get('/', (req, res) => {
     });
 });
 
+/**
+ * @swagger
+ * /api/approval/{id}:
+ *   get:
+ *     summary: Get approval by ID
+ *     tags: [Approvals]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Approval ID
+ *     responses:
+ *       200:
+ *         description: Approval details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Approval'
+ *       404:
+ *         description: Approval not found
+ *       500:
+ *         description: Database query error
+ */
 // Menangani request GET untuk mendapatkan approval berdasarkan ID
 router.get('/:id', (req, res) => {
     const { id } = req.params; // Mengambil ID dari parameter
@@ -23,6 +104,48 @@ router.get('/:id', (req, res) => {
     });
 });
 
+/**
+ * @swagger
+ * /api/approval/approve:
+ *   post:
+ *     summary: Create a new approval
+ *     tags: [Approvals]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - ID_Nota
+ *               - ID_Admin
+ *               - Status_Approval
+ *               - Tanggal_Approval
+ *             properties:
+ *               ID_Nota:
+ *                 type: integer
+ *               ID_Admin:
+ *                 type: integer
+ *               Status_Approval:
+ *                 type: string
+ *                 enum: [Approved, Rejected]
+ *               Tanggal_Approval:
+ *                 type: string
+ *                 format: date
+ *               Catatan:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Approval created successfully
+ *       400:
+ *         description: Invalid input
+ *       404:
+ *         description: Nota or Admin not found
+ *       500:
+ *         description: Database error
+ */
 // Menangani request POST untuk membuat approval baru
 router.post('/approve', approvalThrottler, async (req, res) => {
     const { ID_Nota, ID_Admin, Status_Approval, Tanggal_Approval, Catatan } = req.body; // Mengambil data dari body
@@ -71,6 +194,43 @@ router.post('/approve', approvalThrottler, async (req, res) => {
     });
 });
 
+/**
+ * @swagger
+ * /api/approval/{id}:
+ *   put:
+ *     summary: Update approval by ID
+ *     tags: [Approvals]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Approval ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Status_Approval:
+ *                 type: string
+ *                 enum: [Approved, Rejected]
+ *               Catatan:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Approval updated successfully
+ *       400:
+ *         description: Invalid input
+ *       404:
+ *         description: Approval not found
+ *       500:
+ *         description: Database error
+ */
 // Menangani request PUT untuk mengupdate approval
 router.put('/:id', (req, res) => {
     const { id } = req.params; // Mengambil ID dari parameter
@@ -116,6 +276,29 @@ router.put('/:id', (req, res) => {
     });
 });
 
+/**
+ * @swagger
+ * /api/approval/{id}:
+ *   delete:
+ *     summary: Delete approval by ID
+ *     tags: [Approvals]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Approval ID
+ *     responses:
+ *       200:
+ *         description: Approval deleted successfully
+ *       404:
+ *         description: Approval not found
+ *       500:
+ *         description: Database deletion error
+ */
 // Menangani request DELETE untuk menghapus approval
 router.delete('/:id', (req, res) => {
     const { id } = req.params; // Mengambil ID dari parameter
