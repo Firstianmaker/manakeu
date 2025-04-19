@@ -129,7 +129,7 @@ MIDTRANS_CLIENT_KEY=your_midtrans_client_key
 - OAuth harus dikonfigurasi melalui Google Developer Console
 - Pastikan koneksi WhatsApp aktif jika ingin menggunakan integrasi WA
 - Midtrans Payment Gateway harus dikonfigurasikan melalui website midtrans
-- Twilio harus dikonfigurasikan melalui website midtrans
+- Twilio harus dikonfigurasikan melalui website twilio
 
 ## 📫 Kontak & Dokumentasi
 - Dokumentasi API: Swagger tersedia di endpoint /api-docs/#/
