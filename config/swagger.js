@@ -47,6 +47,12 @@ const options = {
 12. **📄 Manajemen Nota**
     - Persetujuan, revisi, verifikasi, status & analisis nota
 
+13. **💬 Integrasi Message (Twilio)** 
+    - Kirim SMS, Buat Panggilan, Lihat Log Pesan
+
+14. **💳 Integrasi Pembayaran (Midtrans)**
+    - Memulai pembayaran, Mengecek status pembayaran, Menerima update status pembayaran
+
 > Seluruh endpoint mendukung validasi input, error handling terstruktur, autentikasi dan otorisasi, serta pencatatan aktivitas.
       `,
       contact: {
