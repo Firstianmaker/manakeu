@@ -2,7 +2,7 @@ const winston = require('winston');
 const { format } = winston;
 const path = require('path');
 
-// Format custom untuk log
+// Format custom
 const customFormat = format.combine(
     format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     format.errors({ stack: true }),
@@ -39,6 +39,7 @@ const requestLogger = (req, res, next) => {
     const start = Date.now();
     res.on('finish', () => {
         const duration = Date.now() - start;
+        
         // Hanya log ke file untuk request penting
         if (res.statusCode >= 400 || req.method !== 'GET') {
             logger.info('HTTP Request', {

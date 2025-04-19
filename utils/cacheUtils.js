@@ -1,39 +1,41 @@
 // utils/cacheUtils.js
 const redis = require('../config/redis');
 
+
 // Fungsi untuk invalidate single pattern
 const invalidateCache = async (pattern) => {
     try {
         const keys = await redis.keys(pattern);
         if (keys.length > 0) {
             await redis.del(keys);
-            console.log(`Cache invalidated for pattern: ${pattern}, ${keys.length} keys removed`);
+            console.log(`Cache dihapus untuk pola: ${pattern}, ${keys.length} kunci dihapus`); // Notifikasi cache dihapus
             return {
                 success: true,
-                message: `Cache invalidated: ${keys.length} keys`,
+                message: `Cache dihapus: ${keys.length} kunci`,
                 pattern,
                 keys
             };
         }
         return {
             success: true,
-            message: 'No keys found to invalidate',
+            message: 'Tidak ditemukan kunci untuk dihapus',
             pattern
         };
     } catch (error) {
-        console.error('Cache invalidation error:', {
+        console.error('Error penghapusan cache:', {
             error: error.message,
             pattern,
             stack: error.stack
         });
         return {
             success: false,
-            message: 'Failed to invalidate cache',
+            message: 'Gagal menghapus cache',
             error: error.message,
             pattern
         };
     }
 };
+
 
 // Fungsi untuk invalidate multiple patterns
 const invalidateMultipleCache = async (patterns) => {
@@ -48,15 +50,16 @@ const invalidateMultipleCache = async (patterns) => {
             timestamp: new Date().toISOString()
         };
     } catch (error) {
-        console.error('Multiple cache invalidation error:', error);
+        console.error('Error penghapusan cache multiple:', error);
         return {
             success: false,
-            message: 'Failed to invalidate multiple cache patterns',
+            message: 'Gagal menghapus cache multiple',
             error: error.message,
             patterns
         };
     }
 };
+
 
 // Fungsi untuk refresh cache (invalidate dan regenerate)
 const refreshCache = async (pattern, regenerateFunction, ...args) => {
@@ -72,7 +75,7 @@ const refreshCache = async (pattern, regenerateFunction, ...args) => {
 
             return {
                 success: true,
-                message: 'Cache successfully refreshed',
+                message: 'Cache berhasil diperbarui',
                 pattern,
                 newData
             };
@@ -80,20 +83,21 @@ const refreshCache = async (pattern, regenerateFunction, ...args) => {
 
         return {
             success: true,
-            message: 'Cache invalidated but not regenerated (no regenerate function provided)',
+            message: 'Cache dihapus tapi tidak diperbarui (tidak ada fungsi perbarui)',
             pattern
         };
 
     } catch (error) {
-        console.error('Cache refresh error:', error);
+        console.error('Error perbarui cache:', error);
         return {
             success: false,
-            message: 'Failed to refresh cache',
+            message: 'Gagal memperbarui cache',
             error: error.message,
             pattern
         };
     }
 };
+
 
 // Fungsi untuk mengecek status cache
 const getCacheStatus = async (pattern) => {
@@ -120,10 +124,10 @@ const getCacheStatus = async (pattern) => {
         };
 
     } catch (error) {
-        console.error('Cache status check error:', error);
+        console.error('Error cek status cache:', error);
         return {
             success: false,
-            message: 'Failed to check cache status',
+            message: 'Gagal cek status cache',
             error: error.message,
             pattern
         };
